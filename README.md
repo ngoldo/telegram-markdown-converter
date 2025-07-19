@@ -2,7 +2,7 @@
 
 A Python library for converting standard Markdown formatting to Telegram's MarkdownV2 format, with proper escaping of special characters.
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/ngoldo/telegram-markdown-converter/workflows/Tests/badge.svg)](https://github.com/ngoldo/telegram-markdown-converter/actions)
 
