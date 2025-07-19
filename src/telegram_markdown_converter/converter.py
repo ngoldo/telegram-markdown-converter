@@ -3,6 +3,7 @@ Module for converting text to safe Markdown formatting for Telegram.
 """
 
 import re
+from typing import cast
 
 
 def convert_markdown(text: str) -> str:
@@ -122,7 +123,7 @@ def convert_markdown(text: str) -> str:
         if md_type == "link":
             link_text: str
             link_url: str
-            link_text, link_url = content
+            link_text, link_url = cast(tuple[str, str], content)
             text = text.replace(placeholder, f"[{link_text}]({link_url})")
         elif md_type == "bold_italic":
             text = text.replace(placeholder, f"*_{content}_*")
