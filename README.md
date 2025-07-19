@@ -59,7 +59,6 @@ converted = convert_markdown(text)
 | -------------------------- | -------------------------- | ------------------ |
 | `**bold**`                 | `*bold*`                   | Bold text          |
 | `*italic*`                 | `_italic_`                 | Italic text        |
-| `***bold italic***`        | `*_bold italic_*`          | Bold and italic    |
 | `~~strikethrough~~`        | `~strikethrough~`          | Strikethrough text |
 | `__underline__`            | `__underline__`            | Underlined text    |
 | `\|\|spoiler\|\|`          | `\|\|spoiler\|\|`          | Spoiler text       |
