@@ -20,6 +20,10 @@ def convert_markdown(text: str) -> str:
     code_items: list[str] = []
     md_items: list[tuple[str, str | tuple[str, str]]] = []
 
+    # Handle escaped code blocks first, so they are not treated as actual code blocks.
+    text = text.replace("\\`\\`\\`", "ESCAPEDTRIPLEBACKTICK")
+    text = text.replace("\\`", "ESCAPEDBACKTICK")
+
     # Isolate code blocks and inline code first, as they are not processed for markdown.
     def isolate_code(match: re.Match[str]) -> str:
         """Isolate code block with placeholder.
@@ -28,12 +32,15 @@ def convert_markdown(text: str) -> str:
         :return: A placeholder for the code block.
         :rtype: str
         """
-        # Escape backslashes and backticks inside code as per Telegram spec
-        content: str = match.group(1).replace("\\", "\\\\").replace("`", "\\`")
+        # Content of the code block
+        content: str = match.group(1)
 
         if match.group(0).startswith("```"):
+            # For multiline code blocks, no escaping is needed for ` and \
             code_items.append(f"```{content}```")
         else:
+            # For inline code, escape backslashes and backticks
+            content = content.replace("\\", "\\\\").replace("`", "\\`")
             code_items.append(f"`{content}`")
 
         # Return a placeholder for the code block
@@ -93,7 +100,19 @@ def convert_markdown(text: str) -> str:
         flags=re.DOTALL,
     )
     text = re.sub(
+        pattern=r"(?<![\\_])_(?!_)(.*?)(?<!\\)_(?!_)",
+        repl=lambda m: isolate_md(m, "italic"),
+        string=text,
+        flags=re.DOTALL,
+    )
+    text = re.sub(
         pattern=r"(?<!\\)~~(.*?)~~",
+        repl=lambda m: isolate_md(m, "strike"),
+        string=text,
+        flags=re.DOTALL,
+    )
+    text = re.sub(
+        pattern=r"(?<![\\~])~(?!~)(.*?)(?<!\\)~(?!~)",
         repl=lambda m: isolate_md(m, "strike"),
         string=text,
         flags=re.DOTALL,
@@ -112,7 +131,7 @@ def convert_markdown(text: str) -> str:
     )
 
     # Escape any remaining special characters in the text.
-    special_chars = r"_*[]()~`>#+-=|{}.!"
+    special_chars = r"_*()~`>#+-=|{}.!"
     text = re.sub(
         pattern=f"(?<!\\\\)([{re.escape(special_chars)}])", repl=r"\\\1", string=text
     )
@@ -141,5 +160,9 @@ def convert_markdown(text: str) -> str:
     # Restore code blocks.
     for i, code in enumerate(code_items):
         text = text.replace(f"PLACEHOLDERCODE{i}", code)
+
+    # Restore escaped backticks
+    text = text.replace("ESCAPEDTRIPLEBACKTICK", "\\`\\`\\`")
+    text = text.replace("ESCAPEDBACKTICK", "\\`")
 
     return text
