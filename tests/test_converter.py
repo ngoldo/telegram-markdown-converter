@@ -125,7 +125,7 @@ def test_complex_text_with_code():
         "    return None\n\n# 0 - open cell, 1 - wall\nsample_maze = [\n"
         "    [0, 1, 0, 0, 0],\n    [0, 1, 0, 1, 0],\n    [0, 0, 0, 1, 0],\n"
         "    [1, 1, 0, 1, 0],\n    [0, 0, 0, 0, 0]\n]\nstart = (0, 0)\n"
-        'end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n'
+        "end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n"
         'print("Shortest path:", path)\n```\n\n---\n\n'
         "**What does this do?**\n\n- **Input:**  \n"
         "  - A maze (`sample_maze`) as a 2D list: `0` is open, `1` is a wall.\n"
@@ -159,7 +159,7 @@ def test_complex_text_with_code():
         "    return None\n\n# 0 - open cell, 1 - wall\nsample_maze = [\n"
         "    [0, 1, 0, 0, 0],\n    [0, 1, 0, 1, 0],\n    [0, 0, 0, 1, 0],\n"
         "    [1, 1, 0, 1, 0],\n    [0, 0, 0, 0, 0]\n]\nstart = (0, 0)\n"
-        'end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n'
+        "end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n"
         'print("Shortest path:", path)\n```\n\n\\-\\-\\-\n\n'
         "*What does this do?*\n\n\\- *Input:*  \n"
         "  \\- A maze \\(`sample_maze`\\) as a 2D list: `0` is open, `1` is a "
