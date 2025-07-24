@@ -5,7 +5,6 @@ Module for converting text to safe Markdown formatting for Telegram.
 import re
 from typing import Literal
 
-
 # A list of characters to escape in Telegram MarkdownV2.
 # '>' is included and handled separately for blockquotes.
 SPECIAL_CHARS = r"_*[]()~`>#+-=|{}.!"
