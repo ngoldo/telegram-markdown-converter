@@ -12,12 +12,13 @@ def test_no_markdown() -> None:
 
 def test_simple_bold() -> None:
     """Test simple bold conversion."""
-    assert convert_markdown("*bold text*") == "*bold text*"
+    assert convert_markdown("**bold text**") == "*bold text*"
 
 
 def test_simple_italic() -> None:
     """Test simple italic conversion."""
     assert convert_markdown("_italic text_") == "_italic text_"
+    assert convert_markdown("*italic text*") == "_italic text_"
 
 
 def test_simple_strikethrough() -> None:
@@ -65,6 +66,10 @@ def test_inline_code() -> None:
 def test_code_block() -> None:
     """Test that code blocks are preserved and not escaped."""
     assert convert_markdown("```\ncode block\n```") == "```\ncode block\n```"
+    assert (
+        convert_markdown("```\ncode block with `inline code`\n```")
+        == "```\ncode block with \\`inline code\\`\n```"
+    )
 
 
 def test_code_block_with_lang() -> None:
@@ -87,12 +92,12 @@ def test_nested_markdown() -> None:
     )
     assert convert_markdown(
         (
-            "*bold _italic bold ~italic bold strikethrough ||italic bold"
-            "strikethrough spoiler||~ __underline italic bold___ bold*"
+            "**bold _italic bold ~italic bold strikethrough ||italic bold"
+            "strikethrough spoiler||~ __underline italic bold___ bold**"
         )
     ) == (
-        "*bold _italic bold ~italic bold strikethrough ||italic bold"
-        "strikethrough spoiler||~ __underline italic bold___ bold*"
+        "**bold _italic bold ~italic bold strikethrough ||italic bold"
+        "strikethrough spoiler||~ __underline italic bold___ bold**"
     )
     assert (
         convert_markdown("\n*Italic with ~~strikethrough~~ inside*")
@@ -111,7 +116,7 @@ def test_link() -> None:
 def test_link_with_markdown() -> None:
     """Test link with markdown in the text."""
     assert (
-        convert_markdown("[*bold link*](https://google.com)")
+        convert_markdown("[**bold link**](https://google.com)")
         == "[*bold link*](https://google.com)"
     )
 
@@ -133,7 +138,7 @@ def test_slash_handling() -> None:
     assert convert_markdown("C:\\test\\") == "C:\\\\test\\\\"
     assert convert_markdown("C:/test/") == "C:/test/"
     assert convert_markdown("C:\\test\\file.txt") == "C:\\\\test\\\\file\\.txt"
-    assert convert_markdown(("```python\nprint('Hello')\n" "C:\\test\\```")) == (
+    assert convert_markdown("```python\nprint('Hello')\nC:\\test\\```") == (
         "```python\nprint('Hello')\nC:\\\\test\\\\```"
     )
 
@@ -182,18 +187,18 @@ def test_complex_text_with_code() -> None:
         "    directions = [(-1,0), (1,0), (0,-1), (0,1)]\n"
         "    visited = {start}\n"
         "```\n\n---\n\n"
-        "*What does this do?*\n\n- *Input:*\n"
+        "**What does this do?**\n\n- **Input:**\n"
         "  - A maze (`sample_maze`) as a 2D list: `0` is open, `1` is a wall.\n"
         "  - `start` and `end` points as (row, col) tuples.\n\n"
-        "- *How:*\n"
+        "- **How:**\n"
         "  - Uses Breadth-First Search to find from `start` to `end`.\n"
         "  - Moves only up/down/left/right (no diagonals).\n"
         "  - Tracks visited cells to avoid loops.\n\n"
-        "- *Output:*\n"
+        "- **Output:**\n"
         "  - Prints the list of coordinates, or `None` if not found.\n\n"
         "---\n\n"
         "If you want another code example"
-        "(e.g., *bold*, _italic_, ~strikethrough~"
+        "(e.g., **bold**, _italic_, ~strikethrough~"
         "\n"
         ">blockquotes"
         "\n"

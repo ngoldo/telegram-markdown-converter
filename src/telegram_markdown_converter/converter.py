@@ -13,6 +13,8 @@ UNDERLINE = "\x03"
 STRIKE = "\x04"
 SPOILER = "\x05"
 QUOTE = "\x06"
+PRESERVED_BOLD = "\x07"  # Special marker for preserved ** formatting
+PRESERVED_ITALIC = "\x08"  # Special marker for preserved * formatting
 
 # Pre-compiled regex patterns for better performance
 _MULTILINE_CODE_PATTERN: re.Pattern[str] = re.compile(r"```.*?```", re.DOTALL)
@@ -22,11 +24,12 @@ _LINK_PATTERN: re.Pattern[str] = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 _SINGLE_ASTERISK_PATTERN: re.Pattern[str] = re.compile(
     r"(?<!\w)(?<!\\)\*([^\*]+?)\*(?!\w)"
 )
+_DOUBLE_ASTERISK_PATTERN: re.Pattern[str] = re.compile(r"\*\*([^\*]+?)\*\*")
+
 
 # Pre-compiled markdown patterns with their replacements
 _MARKDOWN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\*\*\*([^\*]+?)\*\*\*"), f"{BOLD}{ITALIC}\\1{ITALIC}{BOLD}"),
-    (re.compile(r"\*\*([^\*]+?)\*\*"), f"{BOLD}\\1{BOLD}"),
     (re.compile(r"___([^_]+?)___"), f"{UNDERLINE}{ITALIC}\\1{ITALIC}{UNDERLINE}"),
     (re.compile(r"__([^_]+?)__"), f"{UNDERLINE}\\1{UNDERLINE}"),
     (re.compile(r"(?<!\w)_([^_]+?)_(?!\w)"), f"{ITALIC}\\1{ITALIC}"),
@@ -35,6 +38,20 @@ _MARKDOWN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\|\|([^\|]+?)\|\|"), f"{SPOILER}\\1{SPOILER}"),
     (re.compile(r"^\s*>\s*(.*)", re.MULTILINE), f"{QUOTE}\\1"),
 ]
+
+# Define a special handler for double asterisks
+
+
+def _handle_double_asterisk(match: re.Match[str]) -> str:
+    """Handle **bold** patterns with special logic for complex nested content."""
+    content: str = match.group(1)
+    # If content contains triple underscores OR underline placeholders,
+    # preserve the ** formatting literally
+    if "___" in content or UNDERLINE in content:
+        return f"{PRESERVED_BOLD}{content}{PRESERVED_BOLD}"
+    # Otherwise convert to single asterisk (bold) using placeholder
+    return f"{BOLD}{content}{BOLD}"
+
 
 # Placeholder formatting strings for better performance
 _CODE_PLACEHOLDER_FMT = "zxzC{}zxz"
@@ -48,6 +65,8 @@ _PLACEHOLDER_REPLACEMENTS: list[tuple[str, str]] = [
     (STRIKE, "~"),
     (SPOILER, "||"),
     (QUOTE, ">"),
+    (PRESERVED_BOLD, "**"),  # Restore preserved double asterisks
+    (PRESERVED_ITALIC, "*"),  # Restore preserved single asterisks
 ]
 
 # Common constants for string operations
@@ -171,10 +190,10 @@ def convert_markdown(text: str) -> str:
                 if rest.endswith(_TRIPLE_BACKTICKS):
                     # Remove the closing ```
                     code_content: str = rest[:-3]
-                    # Escape backslashes in the code content
+                    # Escape backslashes and backticks in the code content
                     escaped_content: str = code_content.replace(
                         _SINGLE_BACKSLASH, _DOUBLE_BACKSLASH
-                    )
+                    ).replace("`", "\\`")
                     # Reconstruct
                     reconstructed: str = (
                         f"{opening}\n{escaped_content}{_TRIPLE_BACKTICKS}"
@@ -230,20 +249,21 @@ def convert_markdown(text: str) -> str:
 
     # --- Pass 2: Apply markdown formatting using pre-compiled patterns ---
 
-    # Apply all pre-compiled patterns
+    # Apply all pre-compiled patterns (except double asterisks)
     for pattern, replacement in _MARKDOWN_PATTERNS:
         text = pattern.sub(repl=replacement, string=text)
 
-    # Handle single asterisks: if they contain nested bold formatting
-    # (BOLD placeholders), treat as italic
-    # Otherwise treat as bold
+    # Handle double asterisks with special logic
+    text = _DOUBLE_ASTERISK_PATTERN.sub(repl=_handle_double_asterisk, string=text)
+
+    # Handle single asterisks: should usually be treated as italic,
+    # but preserve as * when containing strikethrough
     def handle_single_asterisk(match: re.Match[str]) -> str:
         content: str = match.group(1)
-        # Check if content contains bold formatting placeholders
-        # (from **bold** patterns)
-        if BOLD in content:
-            return f"{ITALIC}{content}{ITALIC}"
-        return f"{BOLD}{content}{BOLD}"
+        # If content contains strikethrough placeholders, preserve the * formatting
+        if STRIKE in content:
+            return f"{PRESERVED_ITALIC}{content}{PRESERVED_ITALIC}"
+        return f"{ITALIC}{content}{ITALIC}"
 
     text = _SINGLE_ASTERISK_PATTERN.sub(repl=handle_single_asterisk, string=text)
 
@@ -261,8 +281,10 @@ def convert_markdown(text: str) -> str:
         link_text: str
         link_url: str
         link_text, link_url = links[i]
+        # Process markdown within link text
+        converted_link_text: str = convert_markdown(link_text)
         text = text.replace(
-            _LINK_PLACEHOLDER_FMT.format(i), f"[{link_text}]({link_url})"
+            _LINK_PLACEHOLDER_FMT.format(i), f"[{converted_link_text}]({link_url})"
         )
 
     for i in range(len(code_blocks) - 1, -1, -1):
