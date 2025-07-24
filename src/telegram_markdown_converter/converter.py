@@ -32,7 +32,7 @@ def escape_special_chars(text: str) -> str:
         char: str = text[i]
         if char == "\\":
             if i + 1 < len(text):
-                escaped_text += text[i: i + 2]
+                escaped_text += text[i : i + 2]
                 i += 2
             else:
                 escaped_text += char
