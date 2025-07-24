@@ -3,7 +3,6 @@ Module for converting text to safe Markdown formatting for Telegram.
 """
 
 import re
-from typing import Literal
 
 # A list of characters to escape in Telegram MarkdownV2.
 # '>' is included and handled separately for blockquotes.
@@ -24,7 +23,7 @@ def escape_special_chars(text: str) -> str:
     :rtype: str
     """
 
-    chars_to_escape: Literal["()."] | Literal["_*[]()~`>#+-=|{}.!"] = SPECIAL_CHARS
+    chars_to_escape: str = SPECIAL_CHARS
 
     escaped_text: str = ""
     i = 0
@@ -32,7 +31,7 @@ def escape_special_chars(text: str) -> str:
         char: str = text[i]
         if char == "\\":
             if i + 1 < len(text):
-                escaped_text += text[i : i + 2]
+                escaped_text += text[i: i + 2]
                 i += 2
             else:
                 escaped_text += char
