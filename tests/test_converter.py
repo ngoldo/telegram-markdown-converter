@@ -124,6 +124,20 @@ def test_special_characters() -> None:
     )
 
 
+def test_slash_handling() -> None:
+    """Test that slashes are correctly handled."""
+    assert (
+        convert_markdown("Path: C:\\Users\\user\\Documents")
+        == "Path: C:\\\\Users\\\\user\\\\Documents"
+    )
+    assert convert_markdown("C:\\test\\") == "C:\\\\test\\\\"
+    assert convert_markdown("C:/test/") == "C:/test/"
+    assert convert_markdown("C:\\test\\file.txt") == "C:\\\\test\\\\file\\.txt"
+    assert convert_markdown(("```python\nprint('Hello')\n" "C:\\test\\```")) == (
+        "```python\nprint('Hello')\nC:\\\\test\\\\```"
+    )
+
+
 def test_code_with_special_chars() -> None:
     """Test that special characters inside code are not escaped,
     but backticks and backslashes are.
