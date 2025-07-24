@@ -177,8 +177,7 @@ def convert_markdown(text: str) -> str:
                     )
                     # Reconstruct
                     reconstructed: str = (
-                        f"{opening}\n{
-                            escaped_content}{_TRIPLE_BACKTICKS}"
+                        f"{opening}\n{escaped_content}{_TRIPLE_BACKTICKS}"
                     )
                 else:
                     # No closing found, keep as-is
