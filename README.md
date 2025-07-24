@@ -55,16 +55,18 @@ converted = convert_markdown(text)
 
 ## Supported Markdown Elements
 
-| Standard Markdown          | Telegram MarkdownV2        | Description        |
-| -------------------------- | -------------------------- | ------------------ |
-| `**bold**`                 | `*bold*`                   | Bold text          |
-| `*italic*`                 | `_italic_`                 | Italic text        |
-| `~~strikethrough~~`        | `~strikethrough~`          | Strikethrough text |
-| `__underline__`            | `__underline__`            | Underlined text    |
-| `\|\|spoiler\|\|`          | `\|\|spoiler\|\|`          | Spoiler text       |
-| `[link](url)`              | `[link](url)`              | Hyperlinks         |
-| `` `inline code` ``        | `` `inline code` ``        | Inline code        |
-| ```` ```code block``` ```` | ```` ```code block``` ```` | Code blocks        |
+| Standard Markdown                     | Telegram MarkdownV2        | Description          |
+| ------------------------------------- | -------------------------- | -------------------- |
+| `**bold**`                            | `*bold*`                   | Bold text            |
+| `***bold italic***`                   | `*\_bold italic\_*`        | Bold and Italic text |
+| `*italic*`/`_italic_`                 | `_italic_`                 | Italic text          |
+| `~~strikethrough~~`/`~strikethrough~` | `~strikethrough~`          | Strikethrough text   |
+| `__underline__`                       | `__underline__`            | Underlined text      |
+| `\|\|spoiler\|\|`                     | `\|\|spoiler\|\|`          | Spoiler text         |
+| `> blockquote`                        | `>blockquote`              | Blockquotes          |
+| `[link](url)`                         | `[link](url)`              | Hyperlinks           |
+| `` `inline code` ``                   | `` `inline code` ``        | Inline code          |
+| ```` ```code block``` ````            | ```` ```code block``` ```` | Code blocks          |
 
 ## API Reference
 

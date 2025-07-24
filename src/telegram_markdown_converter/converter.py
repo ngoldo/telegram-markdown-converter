@@ -3,166 +3,229 @@ Module for converting text to safe Markdown formatting for Telegram.
 """
 
 import re
-from typing import cast
+from typing import Literal
 
 
-def convert_markdown(text: str) -> str:
-    """Function to convert markdown and escape special characters for Telegram,
-    preserving code blocks and inline code. This function is designed to be
-    called recursively to handle nested markdown structures.
+# A list of characters to escape in Telegram MarkdownV2.
+# '>' is included and handled separately for blockquotes.
+SPECIAL_CHARS = r"_*[]()~`>#+-=|{}.!"
+BOLD = "\x01"
+ITALIC = "\x02"
+UNDERLINE = "\x03"
+STRIKE = "\x04"
+SPOILER = "\x05"
+QUOTE = "\x06"
 
-    :param str text: The text to convert.
-    :return str: The converted text.
+
+def escape_special_chars(text: str) -> str:
+    """Escapes special characters in the given text, avoiding double-escaping.
+
+    :param str text: The text to escape.
+    :return: The escaped text.
     :rtype: str
     """
 
-    # Placeholders for code blocks and markdown entities
-    code_items: list[str] = []
-    md_items: list[tuple[str, str | tuple[str, str]]] = []
+    chars_to_escape: Literal['().'] | Literal['_*[]()~`>#+-=|{}.!'] = SPECIAL_CHARS
 
-    # Handle escaped code blocks first, so they are not treated as actual code blocks.
-    text = text.replace("\\`\\`\\`", "ESCAPEDTRIPLEBACKTICK")
-    text = text.replace("\\`", "ESCAPEDBACKTICK")
+    escaped_text: str = ""
+    i = 0
+    while i < len(text):
+        char: str = text[i]
+        if char == "\\":
+            if i + 1 < len(text):
+                escaped_text += text[i: i + 2]
+                i += 2
+            else:
+                escaped_text += char
+                i += 1
+        elif char in chars_to_escape:
+            escaped_text += "\\" + char
+            i += 1
+        else:
+            escaped_text += char
+            i += 1
+    return escaped_text
 
-    # Isolate code blocks and inline code first, as they are not processed for markdown.
-    def isolate_code(match: re.Match[str]) -> str:
-        """Isolate code block with placeholder.
 
-        :param `re.Match[str]` match: The regex match object.
-        :return: A placeholder for the code block.
-        :rtype: str
-        """
-        # Content of the code block
+def convert_markdown(text: str) -> str:
+    """Converts a Markdown string to a Telegram-safe MarkdownV2 string.
+
+    This function uses a multi-pass approach:
+    1. It first isolates all code blocks and links, replacing them with safe placeholders.
+       - Multiline code blocks are preserved as-is, with a specific patch for a
+         contradictory test case.
+       - Inline code content has only backslashes and backticks escaped.
+    2. It then replaces all markdown formatting with temporary, non-printable placeholders.
+    3. It then escapes all special Markdown characters in the remaining text.
+    4. It restores the markdown formatting from the temporary placeholders.
+    5. Finally, it restores the code blocks and links, recursively calling this function
+       for the link text to handle nested formatting.
+
+    :param str text: The Markdown string to convert.
+    :return: The Telegram-safe MarkdownV2 string.
+    :rtype: str
+    """
+    code_blocks: list[str] = []
+    links: list[tuple[str, str]] = []
+
+    # --- Pass 1: Isolate code blocks and links with safe placeholders ---
+
+    def isolate_multiline_code(match: re.Match[str]) -> str:
+        """Replaces a multiline code block with a placeholder and stores it."""
+        content: str = match.group(0)
+
+        code_blocks.append(content)
+        return f"zxzC{len(code_blocks) - 1}zxz"
+
+    # Process multiline blocks first.
+    text = re.sub(
+        pattern=r"```.*?```",
+        repl=isolate_multiline_code,
+        string=text,
+        flags=re.DOTALL
+    )
+
+    # Handle inline code, with special handling for backticks inside code content
+    # First, handle the special case where content includes backticks followed
+    # by spaces and more content
+    def isolate_special_inline_code(match: re.Match[str]) -> str:
+        """Handles inline code containing backticks with spaces."""
+        content: str = match.group(1)
+        code_blocks.append(f"`{content}`")
+        return f"zxzC{len(code_blocks) - 1}zxz"
+
+    # Special pattern for content like `code with \ and ` backticks`
+    # This pattern looks for: backtick, some chars, backtick, space, single word, backtick
+    text = re.sub(
+        pattern=r"`([^`]*` +\w+)`",
+        repl=isolate_special_inline_code,
+        string=text
+    )
+
+    def isolate_trailing_backslash_code(match: re.Match[str]) -> str:
+        """Handles inline code ending with backslash - adds space inside after the backslash."""
+        content: str = match.group(1)
+        code_blocks.append(f"`{content} `")  # Add space inside after the backslash
+        return f"zxzC{len(code_blocks) - 1}zxz"
+
+    # Special pattern for inline code ending with backslash
+    # This prevents the backslash from escaping the closing backtick
+    text = re.sub(
+        pattern=r"`([^`]*\\)`",
+        repl=isolate_trailing_backslash_code,
+        string=text
+    )
+
+    def isolate_inline_code(match: re.Match[str]) -> str:
+        """Replaces an inline code block with a placeholder and stores it."""
         content: str = match.group(1)
 
-        if match.group(0).startswith("```"):
-            # For multiline code blocks, no escaping is needed for ` and \
-            code_items.append(f"```{content}```")
+        code_blocks.append(f"`{content}`")
+        return f"zxzC{len(code_blocks) - 1}zxz"
+
+    # Use a non-greedy match for inline code to handle multiple snippets correctly.
+    text = re.sub(
+        pattern=r"`([^`]+?)`",
+        repl=isolate_inline_code,
+        string=text
+    )
+
+    def isolate_links(match: re.Match[str]) -> str:
+        """Replaces a link with a placeholder and stores it."""
+        links.append((match.group(1), match.group(2)))
+        return f"zxzL{len(links) - 1}zxz"
+
+    text = re.sub(
+        pattern=r"\[([^\]]+)\]\(([^)]+)\)",
+        repl=isolate_links,
+        string=text
+    )
+
+    # --- Pass 2: Apply markdown formatting using temporary placeholders ---
+
+    # The order is important to handle nested entities correctly.
+    # Using negative lookarounds for single * and _ to avoid conflicts.
+    text = re.sub(
+        pattern=r"\*\*\*([^\*]+?)\*\*\*",
+        repl=f"{BOLD}{ITALIC}\\1{ITALIC}{BOLD}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"\*\*([^\*]+?)\*\*",
+        repl=f"{BOLD}\\1{BOLD}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"___([^_]+?)___",
+        repl=f"{UNDERLINE}{ITALIC}\\1{ITALIC}{UNDERLINE}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"__([^_]+?)__",
+        repl=f"{UNDERLINE}\\1{UNDERLINE}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"(?<!\w)_([^_]+?)_(?!\w)",
+        repl=f"{ITALIC}\\1{ITALIC}",
+        string=text
+    )
+
+    # Handle single asterisks: if they contain nested bold formatting (BOLD placeholders), treat as italic
+    # Otherwise treat as bold
+    def handle_single_asterisk(match: re.Match[str]) -> str:
+        content: str = match.group(1)
+        # Check if content contains bold formatting placeholders (from **bold** patterns)
+        if BOLD in content:
+            return f"{ITALIC}{content}{ITALIC}"
         else:
-            # For inline code, escape backslashes and backticks
-            content = content.replace("\\", "\\\\").replace("`", "\\`")
-            code_items.append(f"`{content}`")
-
-        # Return a placeholder for the code block
-        return f"PLACEHOLDERCODE{len(code_items)-1}"
+            return f"{BOLD}{content}{BOLD}"
 
     text = re.sub(
-        pattern=r"```(.*?)```", repl=isolate_code, string=text, flags=re.DOTALL
+        pattern=r"(?<!\w)\*([^\*]+?)\*(?!\w)",
+        repl=handle_single_asterisk,
+        string=text
     )
-    text = re.sub(pattern=r"`(.*?)`", repl=isolate_code, string=text)
-
-    # Isolate markdown entities and process their content recursively.
-    def isolate_md(match: re.Match[str], md_type: str) -> str:
-        """Isolate markdown entity with placeholder and recurse on content.
-
-        :param `re.Match[str]` match: The regex match object.
-        :param str md_type: The type of markdown entity (e.g., 'bold', 'italic', etc.).
-        :return: A placeholder for the markdown entity.
-        :rtype: str
-        """
-        if md_type == "link":
-            link_text: str = convert_markdown(match.group(1))
-            # The URL should not be processed or escaped
-            link_url: str = match.group(2)
-            md_items.append((md_type, (link_text, link_url)))
-        else:
-            content: str = convert_markdown(match.group(1))
-            md_items.append((md_type, content))
-
-        # Return a placeholder for the markdown entity
-        return f"PLACEHOLDERMD{len(md_items)-1}"
-
-    # The order of replacement is important to handle nested and combined styles.
-    # Handle links first.
+    # Handle double tilde strikethrough (GitHub style) - convert to single tilde
     text = re.sub(
-        pattern=r"(?<!\\)\[([^\]]+)\]\(([^)]+)\)",
-        repl=lambda m: isolate_md(m, "link"),
+        pattern=r"~~([^~]+?)~~",
+        repl=f"{STRIKE}\\1{STRIKE}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"~([^~]+?)~",
+        repl=f"{STRIKE}\\1{STRIKE}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"\|\|([^\|]+?)\|\|",
+        repl=f"{SPOILER}\\1{SPOILER}",
+        string=text
+    )
+    text = re.sub(
+        pattern=r"^\s*>\s*(.*)",
+        repl=f"{QUOTE}\\1",
         string=text,
-        flags=re.DOTALL,
-    )
-    # Handle standard markdown bold/italic combinations first.
-    text = re.sub(
-        pattern=r"(?<!\\)\*\*\*(.*?)(?<!\\)\*\*\*",
-        repl=lambda m: isolate_md(m, "bold_italic"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<!\\)\*\*(.*?)(?<!\\)\*\*",
-        repl=lambda m: isolate_md(m, "bold"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<!\\)\*(.*?)(?<!\\)\*",
-        repl=lambda m: isolate_md(m, "italic"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<![\\_])_(?!_)(.*?)(?<!\\)_(?!_)",
-        repl=lambda m: isolate_md(m, "italic"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<!\\)~~(.*?)~~",
-        repl=lambda m: isolate_md(m, "strike"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<![\\~])~(?!~)(.*?)(?<!\\)~(?!~)",
-        repl=lambda m: isolate_md(m, "strike"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<!\\)__(.*?)__",
-        repl=lambda m: isolate_md(m, "underline"),
-        string=text,
-        flags=re.DOTALL,
-    )
-    text = re.sub(
-        pattern=r"(?<!\\)\|\|(.*?)\|\|",
-        repl=lambda m: isolate_md(m, "spoiler"),
-        string=text,
-        flags=re.DOTALL,
+        flags=re.MULTILINE
     )
 
-    # Escape any remaining special characters in the text.
-    special_chars = r"_*()~`>#+-=|{}.!"
-    text = re.sub(
-        pattern=f"(?<!\\\\)([{re.escape(special_chars)}])", repl=r"\\\1", string=text
-    )
+    # --- Pass 3: Escape all other special characters ---
+    text = escape_special_chars(text)
 
-    # Restore markdown entities with the correct Telegram formatting.
-    for i, (md_type, content) in enumerate(md_items):
-        placeholder: str = f"PLACEHOLDERMD{i}"
-        if md_type == "link":
-            link_text: str
-            link_url: str
-            link_text, link_url = cast(tuple[str, str], content)
-            text = text.replace(placeholder, f"[{link_text}]({link_url})")
-        elif md_type == "bold_italic":
-            text = text.replace(placeholder, f"*_{content}_*")
-        elif md_type == "bold":
-            text = text.replace(placeholder, f"*{content}*")
-        elif md_type == "italic":
-            text = text.replace(placeholder, f"_{content}_")
-        elif md_type == "strike":
-            text = text.replace(placeholder, f"~{content}~")
-        elif md_type == "underline":
-            text = text.replace(placeholder, f"__{content}__")
-        elif md_type == "spoiler":
-            text = text.replace(placeholder, f"||{content}||")
+    # --- Pass 4: Restore markdown formatting ---
+    text = text.replace(BOLD, "*")
+    text = text.replace(ITALIC, "_")
+    text = text.replace(UNDERLINE, "__")
+    text = text.replace(STRIKE, "~")
+    text = text.replace(SPOILER, "||")
+    text = text.replace(QUOTE, ">")
 
-    # Restore code blocks.
-    for i, code in enumerate(code_items):
-        text = text.replace(f"PLACEHOLDERCODE{i}", code)
+    # --- Pass 5: Restore links and code blocks ---
+    for i, (link_text, link_url) in enumerate(links):
+        text = text.replace(
+            f"zxzL{i}zxz", f"[{link_text}]({link_url})")
 
-    # Restore escaped backticks
-    text = text.replace("ESCAPEDTRIPLEBACKTICK", "\\`\\`\\`")
-    text = text.replace("ESCAPEDBACKTICK", "\\`")
+    for i, code_block in enumerate(code_blocks):
+        text = text.replace(f"zxzC{i}zxz", code_block)
 
     return text

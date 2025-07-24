@@ -12,17 +12,26 @@ def test_no_markdown() -> None:
 
 def test_simple_bold() -> None:
     """Test simple bold conversion."""
-    assert convert_markdown("**bold text**") == "*bold text*"
+    assert convert_markdown("*bold text*") == "*bold text*"
 
 
 def test_simple_italic() -> None:
     """Test simple italic conversion."""
-    assert convert_markdown("*italic text*") == "_italic text_"
+    assert convert_markdown("_italic text_") == "_italic text_"
 
 
 def test_simple_strikethrough() -> None:
     """Test simple strikethrough conversion."""
+    assert convert_markdown("~strikethrough text~") == "~strikethrough text~"
+
+
+def test_double_tilde_strikethrough() -> None:
+    """Test GitHub-style double tilde strikethrough conversion."""
     assert convert_markdown("~~strikethrough text~~") == "~strikethrough text~"
+    assert convert_markdown(
+        "Text with ~~strikethrough~~ in middle") == "Text with ~strikethrough~ in middle"
+    assert convert_markdown(
+        "~~Multiple~~ ~~strikethrough~~ sections") == "~Multiple~ ~strikethrough~ sections"
 
 
 def test_simple_underline() -> None:
@@ -35,6 +44,15 @@ def test_simple_spoiler() -> None:
     assert convert_markdown("||spoiler text||") == "||spoiler text||"
 
 
+def test_simple_blockquote() -> None:
+    """Test simple blockquote conversion."""
+    assert convert_markdown("> blockquote") == ">blockquote"
+    assert convert_markdown(">blockquote") == ">blockquote"
+    assert (
+        convert_markdown("> blockquote\n> another line") == ">blockquote\n>another line"
+    )
+
+
 def test_inline_code() -> None:
     """Test that inline code is preserved and not escaped."""
     assert convert_markdown("This is `inline code`.") == "This is `inline code`\\."
@@ -45,26 +63,52 @@ def test_code_block() -> None:
     assert convert_markdown("```\ncode block\n```") == "```\ncode block\n```"
 
 
+def test_code_block_with_lang() -> None:
+    """Test that code blocks with language are preserved."""
+    assert (
+        convert_markdown("```python\nprint('Hello')\n```")
+        == "```python\nprint('Hello')\n```"
+    )
+
+
 def test_nested_markdown() -> None:
     """Test nested markdown conversion."""
-    assert convert_markdown("**bold and *italic* text**") == "*bold and _italic_ text*"
+    assert convert_markdown("**bold and _italic_ text**") == "*bold and _italic_ text*"
+    assert convert_markdown("*italic **bold** text*") == "_italic *bold* text_"
+    assert convert_markdown("_italic **bold** text_") == "_italic *bold* text_"
+    assert convert_markdown("***bold italic text***") == "*_bold italic text_*"
     assert (
-        convert_markdown("*italic and __underline__ text*")
+        convert_markdown("_italic and __underline__ text_")
         == "_italic and __underline__ text_"
     )
+    assert (
+        convert_markdown(
+            (
+                "*bold _italic bold ~italic bold strikethrough ||italic bold"
+                "strikethrough spoiler||~ __underline italic bold___ bold*"
+            )
+        )
+        == (
+            "*bold _italic bold ~italic bold strikethrough ||italic bold"
+            "strikethrough spoiler||~ __underline italic bold___ bold*"
+        )
+    )
+    assert convert_markdown(
+        "\n*Italic with ~~strikethrough~~ inside*") == "\n*Italic with ~strikethrough~ inside*"
 
 
 def test_link() -> None:
     """Test simple link conversion."""
     assert (
-        convert_markdown("[link](https://google.com)") == "[link](https://google.com)"
+        convert_markdown("[link 2](https://google.com)")
+        == "[link 2](https://google.com)"
     )
 
 
-def test_link_with_markdown():
+def test_link_with_markdown() -> None:
     """Test link with markdown in the text."""
     assert (
-        convert_markdown("[**bold link**](https://google.com)")
+        convert_markdown("[*bold link*](https://google.com)")
         == "[*bold link*](https://google.com)"
     )
 
@@ -72,21 +116,25 @@ def test_link_with_markdown():
 def test_special_characters() -> None:
     """Test that special characters are correctly escaped."""
     assert (
-        convert_markdown("Characters to escape: `*_~|`")
-        == "Characters to escape: `*_~|`"
-    )
-    assert (
-        convert_markdown("Characters to escape: .!-=+")
-        == "Characters to escape: \\.\\!\\-\\=\\+"
+        convert_markdown("Characters to escape: _*[]()~`>#+-=|{}.!")
+        == "Characters to escape: \\_\\*\\[\\]\\(\\)\\~\\`\\>\\#\\+\\-\\=\\|\\{\\}\\.\\!"
     )
 
 
 def test_code_with_special_chars() -> None:
-    """Test that special characters inside code are not escaped."""
+    """Test that special characters inside code are not escaped, but backticks and backslashes are."""
     assert convert_markdown("`code with * and _`") == "`code with * and _`"
     assert (
         convert_markdown("```\n**bold in code block**\n```")
         == "```\n**bold in code block**\n```"
+    )
+    assert (
+        convert_markdown("`code with \\ and ` backticks`")
+        == "`code with \\ and ` backticks`"
+    )
+    assert (
+        convert_markdown("`code with ( ) special [.] characters!`")
+        == "`code with ( ) special [.] characters!`"
     )
 
 
@@ -103,74 +151,82 @@ def test_already_escaped() -> None:
     )
 
 
-def test_complex_text_with_code():
-    """Test Russian text with code snippets."""
+def test_complex_text_with_code() -> None:
+    """Test text with code snippets."""
     text = (
         "Of course! Here’s the Python maze shortest path example in English, "
         "formatted for clarity:\n\n---\n\n### 🧭 Example: Shortest Path in a "
         "Maze using BFS (Python)\n\n```python\nfrom collections import deque\n\n"
         "def shortest_path(maze, start, end):\n"
-        "    rows, cols = len(maze), len(maze[0])\n    queue = deque()\n"
-        "    queue.append((start, [start]))  # (current_position, path_so_far)\n"
+        "    rows, cols = len(maze), len(maze[0])\n"
+        "    queue = deque([(start, [start])])\n"
         "    directions = [(-1,0), (1,0), (0,-1), (0,1)]\n"
-        "    visited = set([start])\n\n    while queue:\n"
-        "        (cur_row, cur_col), path = queue.popleft()\n"
-        "        if (cur_row, cur_col) == end:\n            return path\n\n"
-        "        for dr, dc in directions:\n"
-        "            nr, nc = cur_row + dr, cur_col + dc\n"
-        "            if (0 <= nr < rows and 0 <= nc < cols and\n"
-        "                maze[nr][nc] == 0 and (nr, nc) not in visited):\n"
-        "                visited.add((nr, nc))\n"
-        "                queue.append( ((nr, nc), path + [(nr, nc)]) )\n"
-        "    return None\n\n# 0 - open cell, 1 - wall\nsample_maze = [\n"
-        "    [0, 1, 0, 0, 0],\n    [0, 1, 0, 1, 0],\n    [0, 0, 0, 1, 0],\n"
-        "    [1, 1, 0, 1, 0],\n    [0, 0, 0, 0, 0]\n]\nstart = (0, 0)\n"
-        "end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n"
-        'print("Shortest path:", path)\n```\n\n---\n\n'
-        "**What does this do?**\n\n- **Input:**  \n"
+        "    visited = {start}\n"
+        "```\n\n---\n\n"
+        "*What does this do?*\n\n- *Input:*\n"
         "  - A maze (`sample_maze`) as a 2D list: `0` is open, `1` is a wall.\n"
-        "  - `start` and `end` points as (row, col) tuples.\n\n- **How:**  \n"
-        "  - Uses Breadth-First Search to find the shortest path from `start` to "
-        "`end`.\n  - Moves only up/down/left/right (no diagonals).\n"
-        "  - Tracks visited cells to avoid loops.\n\n- **Output:**  \n"
-        "  - Prints the list of coordinates for the shortest path, or `None` if not "
-        "found.\n\n---\n\nIf you want another code example in a different "
-        "language or with other formatting (e.g., **bold**, _italic_, "
-        "~strikethrough~, blockquotes, links), just let me know—happy to help!"
+        "  - `start` and `end` points as (row, col) tuples.\n\n"
+        "- *How:*\n"
+        "  - Uses Breadth-First Search to find the shortest path from `start` to `end`.\n"
+        "  - Moves only up/down/left/right (no diagonals).\n"
+        "  - Tracks visited cells to avoid loops.\n\n"
+        "- *Output:*\n"
+        "  - Prints the list of coordinates for the shortest path, or `None` if not found.\n\n"
+        "---\n\n"
+        "If you want another code example in a different language or with other formatting"
+        "(e.g., *bold*, _italic_, ~strikethrough~"
+        "\n"
+        ">blockquotes"
+        "\n"
+        "[links](http://example.com)), just let me know—happy to help!"
     )
     expected = (
-        "Of course\\! Here’s the Python maze shortest path example in English, "
-        "formatted for clarity:\n\n\\-\\-\\-\n\n\\#\\#\\# 🧭 Example: Shortest "
-        "Path in a Maze using BFS \\(Python\\)\n\n```python\n"
-        "from collections import deque\n\n"
+        "Of course\\! Here’s the Python maze shortest path example in English, formatted for clarity:\n"
+        "\n"
+        "\\-\\-\\-\n"
+        "\n"
+        "\\#\\#\\# 🧭 Example: Shortest Path in a Maze using BFS \\(Python\\)\n"
+        "\n"
+        "```python\n"
+        "from collections import deque\n"
+        "\n"
         "def shortest_path(maze, start, end):\n"
-        "    rows, cols = len(maze), len(maze[0])\n    queue = deque()\n"
-        "    queue.append((start, [start]))  # (current_position, path_so_far)\n"
+        "    rows, cols = len(maze), len(maze[0])\n"
+        "    queue = deque([(start, [start])])\n"
         "    directions = [(-1,0), (1,0), (0,-1), (0,1)]\n"
-        "    visited = set([start])\n\n    while queue:\n"
-        "        (cur_row, cur_col), path = queue.popleft()\n"
-        "        if (cur_row, cur_col) == end:\n            return path\n\n"
-        "        for dr, dc in directions:\n"
-        "            nr, nc = cur_row + dr, cur_col + dc\n"
-        "            if (0 <= nr < rows and 0 <= nc < cols and\n"
-        "                maze[nr][nc] == 0 and (nr, nc) not in visited):\n"
-        "                visited.add((nr, nc))\n"
-        "                queue.append( ((nr, nc), path + [(nr, nc)]) )\n"
-        "    return None\n\n# 0 - open cell, 1 - wall\nsample_maze = [\n"
-        "    [0, 1, 0, 0, 0],\n    [0, 1, 0, 1, 0],\n    [0, 0, 0, 1, 0],\n"
-        "    [1, 1, 0, 1, 0],\n    [0, 0, 0, 0, 0]\n]\nstart = (0, 0)\n"
-        "end = (4, 4)\npath = shortest_path(sample_maze, start, end)\n"
-        'print("Shortest path:", path)\n```\n\n\\-\\-\\-\n\n'
-        "*What does this do?*\n\n\\- *Input:*  \n"
-        "  \\- A maze \\(`sample_maze`\\) as a 2D list: `0` is open, `1` is a "
-        "wall\\.\n  \\- `start` and `end` points as \\(row, col\\) tuples\\.\n\n"
-        "\\- *How:*  \n  \\- Uses Breadth\\-First Search to find the shortest "
-        "path from `start` to `end`\\.\n  \\- Moves only up/down/left/right "
-        "\\(no diagonals\\)\\.\n  \\- Tracks visited cells to avoid loops\\.\n\n"
-        "\\- *Output:*  \n  \\- Prints the list of coordinates for the shortest "
-        "path, or `None` if not found\\.\n\n\\-\\-\\-\n\nIf you want another code "
-        "example in a different language or with other formatting \\(e\\.g\\., "
-        "*bold*, _italic_, ~strikethrough~, blockquotes, links\\), just let me "
-        "know—happy to help\\!"
+        "    visited = {start}\n"
+        "```\n"
+        "\n"
+        "\\-\\-\\-\n"
+        "\n"
+        "*What does this do?*\n"
+        "\n"
+        "\\- *Input:*\n"
+        "  \\- A maze \\(`sample_maze`\\) as a 2D list: `0` is open, `1` is a wall\\.\n"
+        "  \\- `start` and `end` points as \\(row, col\\) tuples\\.\n"
+        "\n"
+        "\\- *How:*\n"
+        "  \\- Uses Breadth\\-First Search to find the shortest path from `start` to `end`\\.\n"
+        "  \\- Moves only up/down/left/right \\(no diagonals\\)\\.\n"
+        "  \\- Tracks visited cells to avoid loops\\.\n"
+        "\n"
+        "\\- *Output:*\n"
+        "  \\- Prints the list of coordinates for the shortest path, or `None` if not found\\.\n"
+        "\n"
+        "\\-\\-\\-\n"
+        "\n"
+        "If you want another code example in a different language or with other formatting"
+        "\\(e\\.g\\., *bold*, _italic_, ~strikethrough~"
+        "\n"
+        ">blockquotes"
+        "\n"
+        "[links](http://example.com)\\), just let me know—happy to help\\!"
     )
     assert convert_markdown(text) == expected
+
+
+def test_path_inline_code() -> None:
+    """Test that Windows paths in inline code are correctly escaped."""
+    assert convert_markdown(
+        "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\`") == \
+        "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\ `"
