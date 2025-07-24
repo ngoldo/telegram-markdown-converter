@@ -8,12 +8,12 @@ This script demonstrates various uses of the convert_markdown function.
 from telegram_markdown_converter import convert_markdown
 
 
-def main():
+def main() -> None:
     """Demonstrate various markdown conversions."""
     print("Telegram Markdown Converter - Examples")
     print("=" * 40)
 
-    examples = [
+    examples: list[str] = [
         # Basic formatting
         "**Bold text**",
         "*Italic text*",
