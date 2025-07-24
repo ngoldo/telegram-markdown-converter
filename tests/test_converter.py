@@ -135,7 +135,7 @@ def test_code_with_special_chars() -> None:
     )
     assert (
         convert_markdown("`code with \\ and ` backticks`")
-        == "`code with \\ and ` backticks`"
+        == "`code with \\\\ and ` backticks`"
     )
     assert (
         convert_markdown("`code with ( ) special [.] characters!`")
@@ -234,5 +234,5 @@ def test_path_inline_code() -> None:
     """Test that Windows paths in inline code are correctly escaped."""
     assert (
         convert_markdown("`C:\\Users\\user\\Documents\\Project\\ver_2.3\\`")
-        == "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\ `"
+        == "`C:\\\\Users\\\\user\\\\Documents\\\\Project\\\\ver_2.3\\\\`"
     )

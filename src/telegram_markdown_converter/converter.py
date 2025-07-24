@@ -85,7 +85,9 @@ def convert_markdown(text: str) -> str:
     def isolate_special_inline_code(match: re.Match[str]) -> str:
         """Handles inline code containing backticks with spaces."""
         content: str = match.group(1)
-        code_blocks.append(f"`{content}`")
+        # Escape backslashes in inline code content for Telegram MarkdownV2
+        escaped_content = content.replace("\\", "\\\\")
+        code_blocks.append(f"`{escaped_content}`")
         return f"zxzC{len(code_blocks) - 1}zxz"
 
     # Special pattern for content like `code with \ and ` backticks`
@@ -95,23 +97,12 @@ def convert_markdown(text: str) -> str:
         pattern=r"`([^`]*` +\w+)`", repl=isolate_special_inline_code, string=text
     )
 
-    def isolate_trailing_backslash_code(match: re.Match[str]) -> str:
-        """Handles inline code ending with backslash."""
-        content: str = match.group(1)
-        code_blocks.append(f"`{content} `")  # Add space inside after the backslash
-        return f"zxzC{len(code_blocks) - 1}zxz"
-
-    # Special pattern for inline code ending with backslash
-    # This prevents the backslash from escaping the closing backtick
-    text = re.sub(
-        pattern=r"`([^`]*\\)`", repl=isolate_trailing_backslash_code, string=text
-    )
-
     def isolate_inline_code(match: re.Match[str]) -> str:
         """Replaces an inline code block with a placeholder and stores it."""
         content: str = match.group(1)
-
-        code_blocks.append(f"`{content}`")
+        # Escape backslashes in inline code content for Telegram MarkdownV2
+        escaped_content = content.replace("\\", "\\\\")
+        code_blocks.append(f"`{escaped_content}`")
         return f"zxzC{len(code_blocks) - 1}zxz"
 
     # Use a non-greedy match for inline code to handle multiple snippets correctly.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "telegram-markdown-converter"
-version = "1.0.1"
+version = "1.0.3"
 description = "A Python library for converting Markdown to Telegram-safe MarkdownV2 formatting"
 readme = "README.md"
 license = {text = "MIT"}
