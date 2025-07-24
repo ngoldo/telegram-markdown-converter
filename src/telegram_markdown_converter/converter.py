@@ -22,9 +22,6 @@ def escape_special_chars(text: str) -> str:
     :return: The escaped text.
     :rtype: str
     """
-
-    chars_to_escape: str = SPECIAL_CHARS
-
     escaped_text: str = ""
     i = 0
     while i < len(text):
@@ -36,7 +33,7 @@ def escape_special_chars(text: str) -> str:
             else:
                 escaped_text += char
                 i += 1
-        elif char in chars_to_escape:
+        elif char in SPECIAL_CHARS:
             escaped_text += "\\" + char
             i += 1
         else:
