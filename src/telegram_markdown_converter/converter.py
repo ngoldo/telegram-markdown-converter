@@ -73,7 +73,7 @@ def escape_special_chars(text: str) -> str:
     text_len: int = len(text)
 
     # Process chunks to reduce function call overhead
-    last_pos = 0
+    last_pos: int = 0
 
     while i < text_len:
         char: str = text[i]
@@ -88,7 +88,7 @@ def escape_special_chars(text: str) -> str:
                         result.append(text[last_pos:i])
                     result.append(text[i : i + 2])
                     i += 2
-                    last_pos: int = i
+                    last_pos = i
                 else:
                     # Backslash followed by a non-special character needs to be escaped
                     if i > last_pos:
