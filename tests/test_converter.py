@@ -28,10 +28,14 @@ def test_simple_strikethrough() -> None:
 def test_double_tilde_strikethrough() -> None:
     """Test GitHub-style double tilde strikethrough conversion."""
     assert convert_markdown("~~strikethrough text~~") == "~strikethrough text~"
-    assert convert_markdown(
-        "Text with ~~strikethrough~~ in middle") == "Text with ~strikethrough~ in middle"
-    assert convert_markdown(
-        "~~Multiple~~ ~~strikethrough~~ sections") == "~Multiple~ ~strikethrough~ sections"
+    assert (
+        convert_markdown("Text with ~~strikethrough~~ in middle")
+        == "Text with ~strikethrough~ in middle"
+    )
+    assert (
+        convert_markdown("~~Multiple~~ ~~strikethrough~~ sections")
+        == "~Multiple~ ~strikethrough~ sections"
+    )
 
 
 def test_simple_underline() -> None:
@@ -81,20 +85,19 @@ def test_nested_markdown() -> None:
         convert_markdown("_italic and __underline__ text_")
         == "_italic and __underline__ text_"
     )
-    assert (
-        convert_markdown(
-            (
-                "*bold _italic bold ~italic bold strikethrough ||italic bold"
-                "strikethrough spoiler||~ __underline italic bold___ bold*"
-            )
-        )
-        == (
+    assert convert_markdown(
+        (
             "*bold _italic bold ~italic bold strikethrough ||italic bold"
             "strikethrough spoiler||~ __underline italic bold___ bold*"
         )
+    ) == (
+        "*bold _italic bold ~italic bold strikethrough ||italic bold"
+        "strikethrough spoiler||~ __underline italic bold___ bold*"
     )
-    assert convert_markdown(
-        "\n*Italic with ~~strikethrough~~ inside*") == "\n*Italic with ~strikethrough~ inside*"
+    assert (
+        convert_markdown("\n*Italic with ~~strikethrough~~ inside*")
+        == "\n*Italic with ~strikethrough~ inside*"
+    )
 
 
 def test_link() -> None:
@@ -227,6 +230,7 @@ def test_complex_text_with_code() -> None:
 
 def test_path_inline_code() -> None:
     """Test that Windows paths in inline code are correctly escaped."""
-    assert convert_markdown(
-        "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\`") == \
-        "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\ `"
+    assert (
+        convert_markdown("`C:\\Users\\user\\Documents\\Project\\ver_2.3\\`")
+        == "`C:\\Users\\user\\Documents\\Project\\ver_2.3\\ `"
+    )
