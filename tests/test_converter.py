@@ -119,13 +119,15 @@ def test_link_with_markdown() -> None:
 def test_special_characters() -> None:
     """Test that special characters are correctly escaped."""
     assert (
-        convert_markdown("Characters to escape: _*[]()~`>#+-=|{}.!")
-        == "Characters to escape: \\_\\*\\[\\]\\(\\)\\~\\`\\>\\#\\+\\-\\=\\|\\{\\}\\.\\!"
+        convert_markdown("Characters: _*[]()~`>#+-=|{}.!")
+        == "Characters: \\_\\*\\[\\]\\(\\)\\~\\`\\>\\#\\+\\-\\=\\|\\{\\}\\.\\!"
     )
 
 
 def test_code_with_special_chars() -> None:
-    """Test that special characters inside code are not escaped, but backticks and backslashes are."""
+    """Test that special characters inside code are not escaped,
+    but backticks and backslashes are.
+    """
     assert convert_markdown("`code with * and _`") == "`code with * and _`"
     assert (
         convert_markdown("```\n**bold in code block**\n```")
@@ -157,8 +159,8 @@ def test_already_escaped() -> None:
 def test_complex_text_with_code() -> None:
     """Test text with code snippets."""
     text = (
-        "Of course! Here’s the Python maze shortest path example in English, "
-        "formatted for clarity:\n\n---\n\n### 🧭 Example: Shortest Path in a "
+        "Of course! Here’s the Python maze shortest path example in English:"
+        "\n\n---\n\n### 🧭 Example: Shortest Path in a "
         "Maze using BFS (Python)\n\n```python\nfrom collections import deque\n\n"
         "def shortest_path(maze, start, end):\n"
         "    rows, cols = len(maze), len(maze[0])\n"
@@ -170,13 +172,13 @@ def test_complex_text_with_code() -> None:
         "  - A maze (`sample_maze`) as a 2D list: `0` is open, `1` is a wall.\n"
         "  - `start` and `end` points as (row, col) tuples.\n\n"
         "- *How:*\n"
-        "  - Uses Breadth-First Search to find the shortest path from `start` to `end`.\n"
+        "  - Uses Breadth-First Search to find from `start` to `end`.\n"
         "  - Moves only up/down/left/right (no diagonals).\n"
         "  - Tracks visited cells to avoid loops.\n\n"
         "- *Output:*\n"
-        "  - Prints the list of coordinates for the shortest path, or `None` if not found.\n\n"
+        "  - Prints the list of coordinates, or `None` if not found.\n\n"
         "---\n\n"
-        "If you want another code example in a different language or with other formatting"
+        "If you want another code example"
         "(e.g., *bold*, _italic_, ~strikethrough~"
         "\n"
         ">blockquotes"
@@ -184,7 +186,7 @@ def test_complex_text_with_code() -> None:
         "[links](http://example.com)), just let me know—happy to help!"
     )
     expected = (
-        "Of course\\! Here’s the Python maze shortest path example in English, formatted for clarity:\n"
+        "Of course\\! Here’s the Python maze shortest path example in English:\n"
         "\n"
         "\\-\\-\\-\n"
         "\n"
@@ -209,16 +211,16 @@ def test_complex_text_with_code() -> None:
         "  \\- `start` and `end` points as \\(row, col\\) tuples\\.\n"
         "\n"
         "\\- *How:*\n"
-        "  \\- Uses Breadth\\-First Search to find the shortest path from `start` to `end`\\.\n"
+        "  \\- Uses Breadth\\-First Search to find from `start` to `end`\\.\n"
         "  \\- Moves only up/down/left/right \\(no diagonals\\)\\.\n"
         "  \\- Tracks visited cells to avoid loops\\.\n"
         "\n"
         "\\- *Output:*\n"
-        "  \\- Prints the list of coordinates for the shortest path, or `None` if not found\\.\n"
+        "  \\- Prints the list of coordinates, or `None` if not found\\.\n"
         "\n"
         "\\-\\-\\-\n"
         "\n"
-        "If you want another code example in a different language or with other formatting"
+        "If you want another code example"
         "\\(e\\.g\\., *bold*, _italic_, ~strikethrough~"
         "\n"
         ">blockquotes"

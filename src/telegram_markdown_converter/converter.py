@@ -32,7 +32,7 @@ def escape_special_chars(text: str) -> str:
         char: str = text[i]
         if char == "\\":
             if i + 1 < len(text):
-                escaped_text += text[i : i + 2]
+                escaped_text += text[i: i + 2]
                 i += 2
             else:
                 escaped_text += char
@@ -50,11 +50,13 @@ def convert_markdown(text: str) -> str:
     """Converts a Markdown string to a Telegram-safe MarkdownV2 string.
 
     This function uses a multi-pass approach:
-    1. It first isolates all code blocks and links, replacing them with safe placeholders.
+    1. It first isolates all code blocks and links, replacing them with safe
+    placeholders.
        - Multiline code blocks are preserved as-is, with a specific patch for a
          contradictory test case.
        - Inline code content has only backslashes and backticks escaped.
-    2. It then replaces all markdown formatting with temporary, non-printable placeholders.
+    2. It then replaces all markdown formatting with temporary, non-printable
+    placeholders.
     3. It then escapes all special Markdown characters in the remaining text.
     4. It restores the markdown formatting from the temporary placeholders.
     5. Finally, it restores the code blocks and links, recursively calling this function
@@ -91,13 +93,14 @@ def convert_markdown(text: str) -> str:
         return f"zxzC{len(code_blocks) - 1}zxz"
 
     # Special pattern for content like `code with \ and ` backticks`
-    # This pattern looks for: backtick, some chars, backtick, space, single word, backtick
+    # This pattern looks for: backtick, some chars, backtick, space, single word,
+    # backtick
     text = re.sub(
         pattern=r"`([^`]*` +\w+)`", repl=isolate_special_inline_code, string=text
     )
 
     def isolate_trailing_backslash_code(match: re.Match[str]) -> str:
-        """Handles inline code ending with backslash - adds space inside after the backslash."""
+        """Handles inline code ending with backslash."""
         content: str = match.group(1)
         code_blocks.append(f"`{content} `")  # Add space inside after the backslash
         return f"zxzC{len(code_blocks) - 1}zxz"
@@ -147,11 +150,13 @@ def convert_markdown(text: str) -> str:
         pattern=r"(?<!\w)_([^_]+?)_(?!\w)", repl=f"{ITALIC}\\1{ITALIC}", string=text
     )
 
-    # Handle single asterisks: if they contain nested bold formatting (BOLD placeholders), treat as italic
+    # Handle single asterisks: if they contain nested bold formatting
+    # (BOLD placeholders), treat as italic
     # Otherwise treat as bold
     def handle_single_asterisk(match: re.Match[str]) -> str:
         content: str = match.group(1)
-        # Check if content contains bold formatting placeholders (from **bold** patterns)
+        # Check if content contains bold formatting placeholders
+        # (from **bold** patterns)
         if BOLD in content:
             return f"{ITALIC}{content}{ITALIC}"
         else:
