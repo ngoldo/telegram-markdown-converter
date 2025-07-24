@@ -2,7 +2,7 @@
 Pytest tests for the telegram_markdown_converter module.
 """
 
-from telegram_markdown_converter import convert_markdown
+from src.telegram_markdown_converter.converter import convert_markdown
 
 
 def test_no_markdown() -> None:
