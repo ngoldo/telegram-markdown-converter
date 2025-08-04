@@ -8,7 +8,7 @@ handling proper escaping of special characters.
 from .converter import convert_markdown
 
 __version__ = "1.0.0"
-__author__ = "Evan Bulatoff"
+__author__ = "Evan Boulatoff"
 __email__ = "ngoldo@gmail.com"
 
 __all__: list[str] = ["convert_markdown"]
