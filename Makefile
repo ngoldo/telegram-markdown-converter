@@ -1,5 +1,8 @@
 .PHONY: help install install-dev test test-cov lint format type-check clean build upload upload-test
 
+# Use the virtual environment's Python if available, fallback to system python
+PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else echo python; fi)
+
 help:
 	@echo "Available commands:"
 	@echo "  install         Install the package"
@@ -48,10 +51,10 @@ clean:
 	find . -type f -name "*.pyc" -delete
 
 build: clean
-	python -m build
+	$(PYTHON) -m build
 
 upload-test: build
-	python -m twine upload --repository testpypi dist/*
+	$(PYTHON) -m twine upload --repository testpypi dist/*
 
 upload: build
-	python -m twine upload dist/*
+	$(PYTHON) -m twine upload dist/*
