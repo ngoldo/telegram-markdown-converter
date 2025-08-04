@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "telegram-markdown-converter"
-version = "1.0.4"
+version = "1.0.5"
 description = "A Python library for converting Markdown to Telegram-safe MarkdownV2 formatting"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Evan Bulatoff", email = "ngoldo@gmail.com"}
+    {name = "Evan Boulatoff", email = "ngoldo@gmail.com"}
 ]
 keywords = ["telegram", "markdown", "converter", "formatting", "markdownv2"]
 classifiers = [
