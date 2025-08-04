@@ -2,6 +2,7 @@
 
 # Use the virtual environment's Python if available, fallback to system python
 PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else echo python; fi)
+PIP := $(shell if [ -f .venv/bin/pip ]; then echo .venv/bin/pip; else echo pip; fi)
 
 help:
 	@echo "Available commands:"
@@ -18,10 +19,10 @@ help:
 	@echo "  upload          Upload to PyPI"
 
 install:
-	pip install -e .
+	$(PIP) install -e .
 
 install-dev:
-	pip install -e ".[dev]"
+	$(PIP) install -e ".[dev]"
 
 test:
 	pytest
