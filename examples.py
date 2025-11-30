@@ -21,22 +21,17 @@ def main() -> None:
         "~~Strikethrough~~",
         "__Underline__",
         "||Spoiler text||",
-
         # Links
         "[GitHub](https://github.com)",
         "[**Bold link**](https://example.com)",
-
         # Code
         "`inline code`",
         "```\ncode block\nwith multiple lines\n```",
-
         # Mixed content
         "This is **bold**, this is *italic*, and this has `code`!",
         "Check out [this **amazing** repository](https://github.com/ngoldo/telegram-markdown-converter)",
-
         # Special characters
         "Characters that need escaping: . ! - = + ( ) { } [ ]",
-
         # Complex nested example
         "**This is bold with *nested italic* and `code`** - amazing!",
     ]

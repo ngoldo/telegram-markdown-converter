@@ -196,14 +196,14 @@ def convert_markdown(text: str) -> str:
                     ).replace("`", "\\`")
                     # Reconstruct
                     reconstructed: str = (
-                        f"{opening}\n{escaped_content}{_TRIPLE_BACKTICKS}"
+                        f"{opening}\n{escaped_content}\n{_TRIPLE_BACKTICKS}"
                     )
                 else:
                     # No closing found, keep as-is
                     reconstructed = content
             else:
                 # No newlines, just keep as-is
-                reconstructed = content
+                reconstructed = content[:3] + "\n" + content[3:]
         else:
             reconstructed = content
 
@@ -220,7 +220,9 @@ def convert_markdown(text: str) -> str:
         """Handles inline code containing backticks with spaces."""
         content: str = match.group(1)
         # Escape backslashes in inline code content for Telegram MarkdownV2
-        escaped_content: str = content.replace(_SINGLE_BACKSLASH, _DOUBLE_BACKSLASH)
+        escaped_content: str = content.replace(
+            _SINGLE_BACKSLASH, _DOUBLE_BACKSLASH
+        ).replace("`", "\\`")
         code_blocks.append(f"`{escaped_content}`")
         return _CODE_PLACEHOLDER_FMT.format(len(code_blocks) - 1)
 

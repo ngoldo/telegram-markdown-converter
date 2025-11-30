@@ -65,10 +65,10 @@ def test_inline_code() -> None:
 
 def test_code_block() -> None:
     """Test that code blocks are preserved and not escaped."""
-    assert convert_markdown("```\ncode block\n```") == "```\ncode block\n```"
+    assert convert_markdown("```\ncode block\n```") == "```\ncode block\n\n```"
     assert (
         convert_markdown("```\ncode block with `inline code`\n```")
-        == "```\ncode block with \\`inline code\\`\n```"
+        == "```\ncode block with \\`inline code\\`\n\n```"
     )
 
 
@@ -76,7 +76,7 @@ def test_code_block_with_lang() -> None:
     """Test that code blocks with language are preserved."""
     assert (
         convert_markdown("```python\nprint('Hello')\n```")
-        == "```python\nprint('Hello')\n```"
+        == "```python\nprint('Hello')\n\n```"
     )
 
 
@@ -139,7 +139,7 @@ def test_slash_handling() -> None:
     assert convert_markdown("C:/test/") == "C:/test/"
     assert convert_markdown("C:\\test\\file.txt") == "C:\\\\test\\\\file\\.txt"
     assert convert_markdown("```python\nprint('Hello')\nC:\\test\\```") == (
-        "```python\nprint('Hello')\nC:\\\\test\\\\```"
+        "```python\nprint('Hello')\nC:\\\\test\\\\\n```"
     )
 
 
@@ -150,11 +150,11 @@ def test_code_with_special_chars() -> None:
     assert convert_markdown("`code with * and _`") == "`code with * and _`"
     assert (
         convert_markdown("```\n**bold in code block**\n```")
-        == "```\n**bold in code block**\n```"
+        == "```\n**bold in code block**\n\n```"
     )
     assert (
         convert_markdown("`code with \\ and ` backticks`")
-        == "`code with \\\\ and ` backticks`"
+        == "`code with \\\\ and \\` backticks`"
     )
     assert (
         convert_markdown("`code with ( ) special [.] characters!`")
@@ -218,7 +218,7 @@ def test_complex_text_with_code() -> None:
         "    rows, cols = len(maze), len(maze[0])\n"
         "    queue = deque([(start, [start])])\n"
         "    directions = [(-1,0), (1,0), (0,-1), (0,1)]\n"
-        "    visited = {start}\n"
+        "    visited = {start}\n\n"
         "```\n"
         "\n"
         "\\-\\-\\-\n"
