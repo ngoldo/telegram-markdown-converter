@@ -57,9 +57,11 @@ def performance_test() -> None:
         end_time: float = time.perf_counter()
         avg_time: float = (end_time - start_time) / iterations
 
-        print(f"Text size: {text_size:6d} chars | "
-              f"Avg time: {avg_time*1000:7.2f}ms | "
-              f"Rate: {text_size/avg_time:8.0f} chars/sec")
+        print(
+            f"Text size: {text_size:6d} chars | "
+            f"Avg time: {avg_time*1000:7.2f}ms | "
+            f"Rate: {text_size/avg_time:8.0f} chars/sec"
+        )
 
 
 if __name__ == "__main__":
