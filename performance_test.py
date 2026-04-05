@@ -4,7 +4,7 @@ Simple performance test to measure optimization improvements.
 """
 
 import time
-from src.telegram_markdown_converter.converter import convert_markdown
+from telegram_markdown_converter import convert_markdown
 
 
 def generate_test_text(size_multiplier: int = 1) -> str:
